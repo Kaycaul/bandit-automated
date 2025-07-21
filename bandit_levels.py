@@ -1,5 +1,5 @@
 # "solver" functions that solve bandit levels, use the previous flag and extract the current flag
-import re, os, shutil, paramiko
+import re, os, shutil, paramiko, io
 from bandit_client import (
     run_remote_command,
     download_file,
@@ -97,20 +97,12 @@ def bandit12(password: str):
     return flag
 
 def bandit13(password: str):
-    os.makedirs("./tmp", exist_ok=True)
-    try:
-        # download private key
-        download_file(remote_file="/home/bandit13/sshkey.private", 
-                    destination="./tmp/id_rsa", 
-                    username="bandit13", 
-                    password=password)
-        # use private key to connect
-        key = paramiko.RSAKey.from_private_key_file("./tmp/id_rsa")
-        cmd = "cat /etc/bandit_pass/bandit14"
-        flag = run_remote_command_using_key(command=cmd, username="bandit14", key=key).strip()
-    finally:
-        # clean up
-        shutil.rmtree("./tmp", ignore_errors=True)
+    # download private key
+    cmd = "cat /home/bandit13/sshkey.private"
+    key = run_remote_command(command=cmd, username="bandit13", password=password)
+    # use private key to connect
+    cmd = "cat /etc/bandit_pass/bandit14"
+    flag = run_remote_command_using_key(command=cmd, username="bandit14", key=key).strip()
     return flag
 
 def bandit14(password: str):
@@ -128,6 +120,31 @@ def bandit15(password: str):
     result = run_remote_command(command=cmd, username="bandit15", password=password).strip()
     flag = re.search(r"Correct!\n(.{32})", result).group(1)
     return flag
+
+def bandit16(password: str):
+    # scan for ports in the expected range
+    cmd = 'nmap localhost -p 31000-32000 | grep -Eo "^.{5}/tcp" | sed "s/\\/tcp//g"'
+    ports = run_remote_command(command=cmd, username="bandit16", password=password).strip().split("\n")
+    # send each port the password, only one will respond with the flag
+    for port in ports:
+        print(f"Trying port {port}")
+        cmd = f'echo "{password}" \
+            | openssl s_client -connect localhost:{port} -ign_eof -servername localhost --quiet'
+        res = run_remote_command(command=cmd, username="bandit16", password=password).strip()
+        if "Correct!" in res:
+            return res[9:] # ignore "Correct!\n"
+    raise Exception(f"No flag found after trying all {len(ports)} ports")
+
+# this password is an ssh key..
+def bandit17(password: str):
+    cmd = "cat ~/passwords.old"
+    old_passwords = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip().split("\n")
+    cmd = "cat ~/passwords.new"
+    new_passwords = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip().split("\n")
+    for candidate in new_passwords:
+        if candidate not in old_passwords:
+            return candidate
+    raise Exception("No suitable password found")
 
 # this is the order that the solvers will be called in, essentially piped together
 levels = [
@@ -147,4 +164,6 @@ levels = [
     bandit13,
     bandit14,
     bandit15,
+    bandit16,
+    bandit17,
 ]

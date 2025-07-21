@@ -1,6 +1,5 @@
-import subprocess
-from paramiko import AuthenticationException, SSHClient, AutoAddPolicy, SSHException
-import paramiko
+import io, subprocess
+from paramiko import AuthenticationException, SSHClient, AutoAddPolicy, SSHException, RSAKey
 from bandit_constants import BANDIT_HOST, BANDIT_PORT_SSH
 
 def run_remote_command(command: str,
@@ -27,7 +26,7 @@ def run_remote_command(command: str,
 
 def run_remote_command_using_key(command: str,
                        username: str,
-                       key: paramiko.RSAKey,
+                       key: str,
                        hostname: str=BANDIT_HOST,
                        port: int=BANDIT_PORT_SSH
                        ) -> str:
@@ -36,7 +35,7 @@ def run_remote_command_using_key(command: str,
         print(f"Connecting to {username}@{hostname}:{port}")
         while True:
             try:
-                client.connect(hostname=hostname, port=port, username=username, pkey=key)
+                client.connect(hostname=hostname, port=port, username=username, pkey=RSAKey.from_private_key(io.StringIO(key)))
                 break
             except AuthenticationException:
                 raise
