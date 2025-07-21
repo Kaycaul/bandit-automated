@@ -14,7 +14,7 @@ def get_cached_flag(username: str) -> str | None:
         return None
     else:
         flag = flags[username]
-        print(f"Using cached flag for {username}: {flag}")
+        print(f"Found cached flag for {username}: {flag}")
         return flag
     
 def cache_flag(username: str, flag: str):
@@ -26,9 +26,9 @@ def cache_flag(username: str, flag: str):
 
 def summarize_flag_cache():
     flags = get_cached_flags()
-    print(f"Flag cache contains {len(flags)} flags")
+    print(f"Cache contains {len(flags)} flags:")
     for username, flag in flags.items():
-        print(f"  {username.upper()}: {flag}")
+        print(f"  {username.upper()}:{" "*(10-len(username))}{flag}")
 
 def clear_flag_cache():
     if os.path.exists(FLAG_CACHE_PATH):

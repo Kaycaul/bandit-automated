@@ -1,4 +1,4 @@
-import sys
+import sys, shutil
 from bandit_levels import levels
 from bandit_flag_cache import (
     get_cached_flag,
@@ -9,6 +9,7 @@ from bandit_flag_cache import (
 
 if "--fresh" in sys.argv:
     clear_flag_cache()
+    shutil.rmtree("./tmp", ignore_errors=True)
 
 current_password = "bandit0"
 for level, solver in enumerate(levels):

@@ -1,3 +1,4 @@
 __pycache__
 .venv
 bandit_flags_cache.json
+tmp
