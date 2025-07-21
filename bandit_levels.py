@@ -1,4 +1,4 @@
-# functions that solve bandit levels, use the previous flag and extract the current flag
+# "solver" functions that solve bandit levels, use the previous flag and extract the current flag
 import re
 from bandit_client import run_remote_command
 
@@ -17,6 +17,7 @@ def bandit2(password):
     flag = run_remote_command(command=cmd, username="bandit2", password=password).strip()
     return flag
 
+# this is the order that the solvers will be called in, essentially piped together
 levels = [
     bandit0,
     bandit1,

@@ -1,11 +1,14 @@
-from bandit_client import (
+import sys
+from bandit_levels import levels
+from bandit_flag_cache import (
     get_cached_flag,
     cache_flag,
+    clear_flag_cache,
     summarize_flag_cache,
 )
-from bandit_levels import (
-    levels,
-)
+
+if "--fresh" in sys.argv:
+    clear_flag_cache()
 
 current_password = "bandit0"
 for level, solver in enumerate(levels):
