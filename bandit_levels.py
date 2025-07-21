@@ -137,14 +137,9 @@ def bandit16(password: str):
 
 # this password is an ssh key..
 def bandit17(password: str):
-    cmd = "cat ~/passwords.old"
-    old_passwords = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip().split("\n")
-    cmd = "cat ~/passwords.new"
-    new_passwords = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip().split("\n")
-    for candidate in new_passwords:
-        if candidate not in old_passwords:
-            return candidate
-    raise Exception("No suitable password found")
+    cmd = "diff ~/passwords.old ~/passwords.new --suppress-common-lines | grep -Eo \"> .{32}$\" | grep -Eo \".{32}$\""
+    flag = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip()
+    return flag
 
 # this is the order that the solvers will be called in, essentially piped together
 levels = [
