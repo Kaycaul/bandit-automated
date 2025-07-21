@@ -24,7 +24,7 @@ def get_cached_flags():
         with open(FLAG_CACHE_PATH, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        return {"bandit0": "bandit0"}
+        return {}
 
 def get_cached_flag(username):
     flags = get_cached_flags()
