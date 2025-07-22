@@ -141,6 +141,13 @@ def bandit17(password: str):
     flag = run_remote_command_using_key(command=cmd, username="bandit17", key=password).strip()
     return flag
 
+# trivial to automate, the only trick here is that you cant log in with an interactive ssh session
+# passing command directly to ssh circumvents the .bashrc
+def bandit18(password: str):
+    cmd = "cat ~/readme"
+    flag = run_remote_command(command=cmd, username="bandit18", password=password).strip()
+    return flag
+
 # this is the order that the solvers will be called in, essentially piped together
 levels = [
     bandit0,
@@ -161,4 +168,5 @@ levels = [
     bandit15,
     bandit16,
     bandit17,
+    bandit18,
 ]
