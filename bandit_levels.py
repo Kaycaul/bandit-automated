@@ -153,6 +153,17 @@ def bandit19(password: str):
     flag = run_remote_command(command=cmd, username="bandit19", password=password).strip()
     return flag
 
+# start netcat listening on port 2763 in the background (arbitrary port)
+# wait a second for things to start up
+# the provided program (suconnect) will connect to netcat running in bg (&)
+# netcat will respond with the password that was piped into it by echo
+# the provided program will verify the password and send the next password back
+# the response (new password from suconnect) is redirected to stdout
+def bandit20(password: str):
+    cmd = f"echo '{password}' | nc -l 2763 > /dev/stdout & sleep 1; ~/suconnect 2763 > /dev/null"
+    flag = run_remote_command(command=cmd, username="bandit20", password=password).strip()
+    return flag
+
 # this is the order that the solvers will be called in, essentially piped together
 levels = [
     bandit0,
@@ -175,4 +186,5 @@ levels = [
     bandit17,
     bandit18,
     bandit19,
+    bandit20,
 ]
