@@ -1,5 +1,6 @@
 import sys, shutil
-from bandit_levels import levels
+from bandit_levels import get_solvers, SolverType
+from typing import List
 from bandit_flag_cache import (
     get_cached_flag,
     cache_flag,
@@ -12,7 +13,8 @@ if "--fresh" in sys.argv:
     shutil.rmtree("./tmp", ignore_errors=True)
 
 current_password = "bandit0"
-for level, solver in enumerate(levels):
+solvers: List[SolverType] = get_solvers()
+for level, solver in enumerate(solvers):
     # look for a saved flag for this level
     flag = get_cached_flag(f"bandit{level}")
     # if not found, run the solver and save the flag
