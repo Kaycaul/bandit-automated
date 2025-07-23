@@ -148,6 +148,11 @@ def bandit18(password: str):
     flag = run_remote_command(command=cmd, username="bandit18", password=password).strip()
     return flag
 
+def bandit19(password: str):
+    cmd = "~/bandit20-do -S 'cat /etc/bandit_pass/bandit20'"
+    flag = run_remote_command(command=cmd, username="bandit19", password=password).strip()
+    return flag
+
 # this is the order that the solvers will be called in, essentially piped together
 levels = [
     bandit0,
@@ -169,4 +174,5 @@ levels = [
     bandit16,
     bandit17,
     bandit18,
+    bandit19,
 ]
