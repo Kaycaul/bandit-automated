@@ -173,6 +173,11 @@ def bandit21(password: str) -> str:
     flag = run_remote_command(command=cmd, username="bandit21", password=password).strip()
     return flag
 
+def bandit22(password: str) -> str:
+    cmd = "cat \"/tmp/$(echo I am user $myname | md5sum | cut -d ' ' -f 1)\""
+    flag = run_remote_command(command=cmd, username="bandit22", password=password).strip()
+    return flag
+
 # this is the order that the solvers will be called in, essentially piped together
 def get_solvers() -> List[SolverType]:
     return [
@@ -198,4 +203,5 @@ def get_solvers() -> List[SolverType]:
         bandit19,
         bandit20,
         bandit21,
+        bandit22,
     ]
