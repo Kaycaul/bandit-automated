@@ -166,6 +166,13 @@ def bandit20(password: str) -> str:
     flag = run_remote_command(command=cmd, username="bandit20", password=password).strip()
     return flag
 
+# this file contains the name of a file with the key in /tmp/
+# get the path to this file, and pass that into cat to get the key
+def bandit21(password: str) -> str:
+    cmd = 'cat $(cat /usr/bin/cronjob_bandit22.sh | grep -Eo -m 1 "/tmp/.*$")'
+    flag = run_remote_command(command=cmd, username="bandit21", password=password).strip()
+    return flag
+
 # this is the order that the solvers will be called in, essentially piped together
 def get_solvers() -> List[SolverType]:
     return [
@@ -190,4 +197,5 @@ def get_solvers() -> List[SolverType]:
         bandit18,
         bandit19,
         bandit20,
+        bandit21,
     ]
