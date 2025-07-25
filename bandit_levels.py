@@ -174,7 +174,7 @@ def bandit21(password: str) -> str:
     return flag
 
 def bandit22(password: str) -> str:
-    cmd = "cat \"/tmp/$(echo I am user $myname | md5sum | cut -d ' ' -f 1)\""
+    cmd = "cat \"/tmp/$(echo I am user bandit23 | md5sum | cut -d ' ' -f 1)\""
     flag = run_remote_command(command=cmd, username="bandit22", password=password).strip()
     return flag
 
