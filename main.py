@@ -1,4 +1,5 @@
-import sys, shutil
+import sys
+import shutil
 from bandit_levels import get_solvers, SolverType
 from typing import List
 from bandit_flag_cache import (

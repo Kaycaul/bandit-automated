@@ -1,5 +1,7 @@
-import json, os
+import json
+import os
 from bandit_constants import FLAG_CACHE_PATH
+
 
 def get_cached_flags() -> dict[str, str]:
     try:
@@ -7,6 +9,7 @@ def get_cached_flags() -> dict[str, str]:
             return json.load(f)
     except FileNotFoundError:
         return {}
+
 
 def get_cached_flag(username: str) -> str | None:
     flags = get_cached_flags()
@@ -16,7 +19,8 @@ def get_cached_flag(username: str) -> str | None:
         flag = flags[username]
         print(f"Found cached flag for {username}: {nice_flag_print(flag)}")
         return flag
-    
+
+
 def cache_flag(username: str, flag: str):
     print(f"Caching flag for {username}: {nice_flag_print(flag)}")
     flags = get_cached_flags()
@@ -24,14 +28,17 @@ def cache_flag(username: str, flag: str):
     with open(FLAG_CACHE_PATH, "w") as f:
         f.write(json.dumps(flags, indent=4))
 
+
 def summarize_flag_cache():
     flags = get_cached_flags()
     print(f"Cache contains {len(flags)} flags:")
     for username, flag in flags.items():
         print(f"  {username.upper()}:{" "*(10-len(username))}{nice_flag_print(flag)}")
 
+
 def nice_flag_print(flag: str) -> str:
     return flag.strip() if len(flag) <= 40 else f"{flag.replace('\n', '\\n')[:40]}..."
+
 
 def clear_flag_cache():
     if os.path.exists(FLAG_CACHE_PATH):
