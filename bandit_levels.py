@@ -6,6 +6,7 @@ import shutil
 from typing import Callable, List
 
 from bandit_client import (
+    BanditClient,
     run_remote_command,
     download_file,
     run_command,
@@ -182,22 +183,17 @@ def bandit15(password: str) -> str:
 
 
 def bandit16(password: str) -> str:
+    client = BanditClient(username="bandit16", password=password)
     # scan for ports in the expected range
     cmd = 'nmap localhost -p 31000-32000 | grep -Eo "^.{5}/tcp" | sed "s/\\/tcp//g"'
-    ports = (
-        run_remote_command(command=cmd, username="bandit16", password=password)
-        .strip()
-        .split("\n")
-    )
+    ports = client.run(cmd).strip().split("\n")
     # send each port the password, only one will respond with the flag
     for port in ports:
         print(f"Trying port {port}")
         cmd = f'echo "{password}" \
             | openssl s_client -connect localhost:{port} \
             -ign_eof -servername localhost --quiet'
-        res = run_remote_command(
-            command=cmd, username="bandit16", password=password
-        ).strip()
+        res = client.run(cmd).strip()
         if "Correct!" in res:
             return res[9:]  # ignore "Correct!\n"
     raise Exception(f"No flag found after trying all {len(ports)} ports")
@@ -286,14 +282,16 @@ def bandit23(password: str) -> str:
     return flag
 
 
+# try every pin 0000-9999 in batches of 1000
 def bandit24(password: str) -> str:
+    client = BanditClient(username="bandit24", password=password)
     for pin_chunk in [range(0 + x, 1000 + x) for x in range(0, 10000, 1000)]:
         print(f"checking pins {pin_chunk[0]}-{pin_chunk[-1]}")
         cmd = "nc -q 0 localhost 30002 << NC_EOF | grep -Eo '[0-9a-zA-Z]{32}$'\n"
         for pin in [f"{x:04d}" for x in pin_chunk]:
             cmd += f"{password} {pin}\n"
         cmd += "NC_EOF\n"
-        flag = run_remote_command(command=cmd, username="bandit24", password=password)
+        flag = client.run(cmd)
         if flag:
             return flag
         else:
