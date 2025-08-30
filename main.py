@@ -9,6 +9,10 @@ from bandit_flag_cache import (
     summarize_flag_cache,
 )
 
+if "--summary" in sys.argv:
+    summarize_flag_cache()
+    exit(0)
+
 if "--fresh" in sys.argv:
     clear_flag_cache()
     shutil.rmtree("./tmp", ignore_errors=True)

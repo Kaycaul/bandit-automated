@@ -12,13 +12,14 @@ def get_cached_flags() -> dict[str, str]:
         return {}
 
 
-def get_cached_flag(username: str) -> str | None:
+def get_cached_flag(username: str, log=True) -> str | None:
     flags = get_cached_flags()
     if username not in flags.keys():
         return None
     else:
         flag = flags[username]
-        print(f"Found cached flag for {username}: {nice_flag_print(flag)}")
+        if log:
+            print(f"Found cached flag for {username}: {nice_flag_print(flag)}")
         return flag
 
 
