@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 from bandit_constants import FLAG_CACHE_PATH
 
 
@@ -22,6 +23,10 @@ def get_cached_flag(username: str) -> str | None:
 
 
 def cache_flag(username: str, flag: str):
+    if not flag:
+        warnings.warn(
+            f"Flag for {username} is empty! This may indicate an error or a regression."
+        )
     print(f"Caching flag for {username}: {nice_flag_print(flag)}")
     flags = get_cached_flags()
     flags[username] = flag
