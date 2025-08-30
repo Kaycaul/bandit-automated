@@ -31,7 +31,7 @@ def bandit1(password: str) -> str:
 
 
 def bandit2(password: str) -> str:
-    cmd = r"cat ~/spaces\ in\ this\ filename"
+    cmd = r"cat ~/--spaces\ in\ this\ filename--"
     flag = run_remote_command(
         command=cmd, username="bandit2", password=password
     ).strip()
