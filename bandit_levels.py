@@ -319,7 +319,16 @@ def bandit26(key: str) -> str:
     match = re.search(r"[0-9a-zA-Z]{32} ", result)
     if not match:
         raise Exception("Flag not found")
-    return match.group(0)
+    return match.group(0).strip()
+
+
+def bandit27(password: str) -> str:
+    client = BanditClient(username="bandit27", password=password)
+    cmd = "whoami"
+    flag = client.run(cmd).strip()
+    print(flag)
+    exit(0)
+    return flag
 
 
 # this is the order that the solvers will be called in, essentially piped together
@@ -352,4 +361,5 @@ def get_solvers() -> List[SolverType]:
         bandit24,
         bandit25,
         bandit26,
+        bandit27,
     ]
