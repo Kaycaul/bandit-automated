@@ -1,5 +1,6 @@
 import io
 import subprocess
+import warnings
 from paramiko import (
     AuthenticationException,
     SSHClient,
@@ -16,32 +17,69 @@ class BanditClient:
     def __init__(
         self,
         username: str,
-        password: str,
+        password: str = None,
+        key: str = None,
         hostname: str = BANDIT_HOST,
         port: int = BANDIT_PORT_SSH,
     ):
+        if not password and not key:
+            raise Exception("Must provide password or key")
+        if password and key:
+            raise warnings.warn("Both password and key provided, using password")
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
         print(f"Connecting to {username}@{hostname}:{port}")
         while True:
             try:
-                client.connect(
-                    hostname=hostname, port=port, username=username, password=password
-                )
+                if password:
+                    client.connect(
+                        hostname=hostname,
+                        port=port,
+                        username=username,
+                        password=password,
+                    )
+                else:
+                    client.connect(
+                        hostname=hostname,
+                        port=port,
+                        username=username,
+                        pkey=RSAKey.from_private_key(io.StringIO(key)),
+                    )
                 break
             except AuthenticationException:
-                print(f"Authentication failed using password: {password}")
+                if password:
+                    print(f"Authentication failed using password: {password}")
+                else:
+                    print(f"Authentication failed using key: {key}")
                 raise
             except (ConnectionResetError, SSHException):
                 print("Connection reset, trying again...")
+        print("Connection established")
         self.__client = client
 
     def run(self, cmd: str) -> str:
         _, stdout, _ = self.__client.exec_command(cmd)
         return stdout.read().decode("utf-8")
 
+    def download_file(self, remote_file: str, destination: str = ".") -> None:
+        print(f"Downloading {remote_file}")
+        with self.__client.open_sftp() as sftp:
+            sftp.get(
+                remote_file,
+                destination,
+                callback=lambda transferred, total: print(
+                    f"Downloaded {transferred/total*100}%", end="\r"
+                ),
+            )
+        print(f"\n{remote_file} saved to {destination}")
+
     def __del__(self):
         self.__client.close()
+
+    # big bad, but this might be needed sometimes
+    # dont use this unless you really need to
+    def _get(self) -> SSHClient:
+        return self.__client
 
 
 def run_remote_command(
@@ -70,61 +108,10 @@ def run_remote_command(
         return stdout.read().decode("utf-8")
 
 
-def run_remote_command_using_key(
-    command: str,
-    username: str,
-    key: str,
-    hostname: str = BANDIT_HOST,
-    port: int = BANDIT_PORT_SSH,
-) -> str:
-    with SSHClient() as client:
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        print(f"Connecting to {username}@{hostname}:{port}")
-        while True:
-            try:
-                client.connect(
-                    hostname=hostname,
-                    port=port,
-                    username=username,
-                    pkey=RSAKey.from_private_key(io.StringIO(key)),
-                )
-                break
-            except AuthenticationException:
-                raise
-            except (ConnectionResetError, SSHException):
-                print("Connection reset, trying again...")
-        print("Parsing result")
-        _, stdout, _ = client.exec_command(command)
-        return stdout.read().decode("utf-8")
-
-
-def run_command(command: str) -> None:
+def run_command(command: str) -> str:
     print(command)
-    subprocess.run(command.split())
-
-
-def download_file(
-    remote_file: str,
-    destination: str,
-    username: str,
-    password: str,
-    hostname: str = BANDIT_HOST,
-    port: int = BANDIT_PORT_SSH,
-) -> None:
-    with SSHClient() as client:
-        client.set_missing_host_key_policy(AutoAddPolicy())
-        print(f"Connecting to {username}@{hostname}:{port}")
-        while True:
-            try:
-                client.connect(
-                    hostname=hostname, port=port, username=username, password=password
-                )
-                break
-            except AuthenticationException:
-                print(f"Authentication failed using password: {password}")
-                raise
-            except (ConnectionResetError, SSHException):
-                print("Connection reset, trying again...")
-        print(f"Downloading file: {remote_file}")
-        with client.open_sftp() as sftp:
-            sftp.get(remote_file, destination)
+    res = subprocess.run(command.split())
+    if res.stdout:
+        return res.stdout.decode("utf-8")
+    else:
+        return ""

@@ -3,14 +3,13 @@
 import re
 import os
 import shutil
+import time
 from typing import Callable, List
 
 from bandit_client import (
     BanditClient,
     run_remote_command,
-    download_file,
     run_command,
-    run_remote_command_using_key,
 )
 
 SolverType = Callable[[str], str]
@@ -119,14 +118,10 @@ def bandit11(password: str) -> str:
 
 
 def bandit12(password: str) -> str:
+    client = BanditClient(username="bandit12", password=password)
     os.makedirs("./tmp", exist_ok=True)
     try:
-        download_file(
-            remote_file="/home/bandit12/data.txt",
-            destination="./tmp/data.txt",
-            username="bandit12",
-            password=password,
-        )
+        client.download_file("/home/bandit12/data.txt", "./tmp/data.txt")
         # decompress repeatedly
         run_command("xxd -r ./tmp/data.txt ./tmp/data.gz")
         run_command("gzip --force -d ./tmp/data.gz")
@@ -153,9 +148,8 @@ def bandit13(password: str) -> str:
     key = run_remote_command(command=cmd, username="bandit13", password=password)
     # use private key to connect
     cmd = "cat /etc/bandit_pass/bandit14"
-    flag = run_remote_command_using_key(
-        command=cmd, username="bandit14", key=key
-    ).strip()
+    client = BanditClient(username="bandit14", key=key)
+    flag = client.run(cmd).strip()
     return flag
 
 
@@ -200,13 +194,12 @@ def bandit16(password: str) -> str:
 
 
 # this password is an ssh key..
-def bandit17(password: str) -> str:
+def bandit17(key: str) -> str:
     cmd = 'diff ~/passwords.old ~/passwords.new --suppress-common-lines \
         | grep -Eo "> .{32}$" \
         | grep -Eo ".{32}$"'
-    flag = run_remote_command_using_key(
-        command=cmd, username="bandit17", key=password
-    ).strip()
+    client = BanditClient(username="bandit17", key=key)
+    flag = client.run(cmd).strip()
     return flag
 
 
@@ -291,12 +284,42 @@ def bandit24(password: str) -> str:
         for pin in [f"{x:04d}" for x in pin_chunk]:
             cmd += f"{password} {pin}\n"
         cmd += "NC_EOF\n"
-        flag = client.run(cmd)
+        flag = client.run(cmd).strip()
         if flag:
             return flag
         else:
             print("No flag found")
     raise Exception("No flag found after trying all pins!")
+
+
+def bandit25(password: str) -> str:
+    client = BanditClient(username="bandit25", password=password)
+    cmd = "cat ~/bandit26.sshkey"
+    flag = client.run(cmd).strip()
+    return flag
+
+
+# a terminal must be emulated for this one, to emulate window resizing
+# this is the worst solution by far and a stupid gimmicky zelda puzzle
+def bandit26(key: str) -> str:
+    client = BanditClient(username="bandit26", key=key)
+    shell = client._get().invoke_shell(height=6)  # force `more` to enter scrolling mode
+    shell.send("v")  # open vim from `more`
+    shell.send(":set shell=/bin/bash\n")  # reset the shell to something useful
+    shell.send(":term\n")  # open a terminal in vim
+    shell.send("./bandit27-do cat /etc/bandit_pass/bandit27\n")  # get the next password
+
+    # parse the output of those inputs
+    time.sleep(1)
+    result = ""
+    while shell.recv_ready():
+        result += shell.recv(1024).decode("utf-8")
+
+    # look for a flag in all this output mess
+    match = re.search(r"[0-9a-zA-Z]{32}", result)
+    if not match:
+        raise Exception("Flag not found")
+    return match.group(0)
 
 
 # this is the order that the solvers will be called in, essentially piped together
@@ -327,4 +350,6 @@ def get_solvers() -> List[SolverType]:
         bandit22,
         bandit23,
         bandit24,
+        bandit25,
+        bandit26,
     ]
