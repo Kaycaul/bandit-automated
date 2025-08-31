@@ -323,11 +323,21 @@ def bandit26(key: str) -> str:
 
 
 def bandit27(password: str) -> str:
-    client = BanditClient(username="bandit27", password=password)
-    cmd = "whoami"
-    flag = client.run(cmd).strip()
-    print(flag)
-    exit(0)
+    shutil.rmtree("./tmp", ignore_errors=True)
+    try:
+        run_command(
+            f"sshpass -p {password} git clone\
+            ssh://bandit27-git@bandit.labs.overthewire.org:2220/home/bandit27-git/repo\
+            ./tmp"
+        )
+        with open("./tmp/README", "r") as f:
+            output = f.read()
+    finally:
+        shutil.rmtree("./tmp", ignore_errors=True)
+    match = re.search(r"[0-9a-zA-Z]{32}", output)
+    if not match:
+        raise Exception("Flag not found")
+    flag = match.group(0)
     return flag
 
 

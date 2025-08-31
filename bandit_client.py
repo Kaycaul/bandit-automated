@@ -109,7 +109,6 @@ def run_remote_command(
 
 
 def run_command(command: str) -> str:
-    print(command)
     res = subprocess.run(command.split())
     if res.stdout:
         return res.stdout.decode("utf-8")
