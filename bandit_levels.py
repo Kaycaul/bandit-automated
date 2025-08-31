@@ -316,7 +316,7 @@ def bandit26(key: str) -> str:
         result += shell.recv(1024).decode("utf-8")
 
     # look for a flag in all this output mess
-    match = re.search(r"[0-9a-zA-Z]{32}", result)
+    match = re.search(r"[0-9a-zA-Z]{32} ", result)
     if not match:
         raise Exception("Flag not found")
     return match.group(0)
