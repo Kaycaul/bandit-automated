@@ -1,5 +1,6 @@
 import io
 import subprocess
+from typing import List
 import warnings
 from paramiko import (
     AuthenticationException,
@@ -58,7 +59,8 @@ class BanditClient:
         self.__client = client
 
     def run(self, cmd: str) -> str:
-        _, stdout, _ = self.__client.exec_command(cmd)
+        _, stdout, stderr = self.__client.exec_command(cmd)
+        print(stderr.read().decode("utf-8"))
         return stdout.read().decode("utf-8")
 
     def download_file(self, remote_file: str, destination: str = ".") -> None:
@@ -108,8 +110,14 @@ def run_remote_command(
         return stdout.read().decode("utf-8")
 
 
-def run_command(command: str) -> str:
-    res = subprocess.run(command.split())
+def run_command(command: str, quiet: bool = True) -> str:
+    run_command_with_args(command.split(), quiet=quiet)
+
+
+def run_command_with_args(args: List[str], quiet: bool = True) -> str:
+    res = subprocess.run(args)
+    if res.stderr and not quiet:
+        print(res.stderr.decode("utf-8"))
     if res.stdout:
         return res.stdout.decode("utf-8")
     else:

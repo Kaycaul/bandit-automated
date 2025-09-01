@@ -1,0 +1,8 @@
+services:
+  bandit:
+    container_name: bandit
+    build: .
+    volumes:
+      - ./cache:/bandit/cache
+    restart: no
+    network_mode: host

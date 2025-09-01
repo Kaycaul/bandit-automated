@@ -10,6 +10,7 @@ from bandit_client import (
     BanditClient,
     run_remote_command,
     run_command,
+    run_command_with_args,
 )
 
 SolverType = Callable[[str], str]
@@ -73,6 +74,7 @@ def bandit6(password: str) -> str:
     flag = run_remote_command(
         command=cmd, username="bandit6", password=password
     ).strip()
+
     return flag
 
 
@@ -323,22 +325,53 @@ def bandit26(key: str) -> str:
 
 
 def bandit27(password: str) -> str:
-    shutil.rmtree("./tmp", ignore_errors=True)
-    try:
-        run_command(
-            f"sshpass -p {password} git clone\
-            ssh://bandit27-git@bandit.labs.overthewire.org:2220/home/bandit27-git/repo\
-            ./tmp"
-        )
-        with open("./tmp/README", "r") as f:
-            output = f.read()
-    finally:
-        shutil.rmtree("./tmp", ignore_errors=True)
-    match = re.search(r"[0-9a-zA-Z]{32}", output)
-    if not match:
-        raise Exception("Flag not found")
-    flag = match.group(0)
-    return flag
+    run_command("mkdir -p tmp", quiet=False)
+    run_command("chmod 777 tmp", quiet=False)
+    # fuck this insane bullshit
+    # run_command(
+    #     f"sshpass -p {password} "
+    #     "ssh -o StrictHostKeyChecking=no "
+    #     "git clone ssh://bandit27-git@bandit.labs.overthewire.org:2220/home/bandit27-git/repo "
+    #     "./tmp",
+    #     quiet=False,
+    # )
+    run_command_with_args(
+        [
+            "sshpass",
+            "-p",
+            password,
+            "ssh",
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-o",
+            "UserKnownHostsFile=/dev/null",
+            "git clone"
+            "git",
+            "clone",
+            "ssh://bandit27-git@localhost:2220/home/bandit27-git/repo",
+            "./tmp",
+        ],
+        quiet=False,
+    )
+    exit(0)
+    # match = re.search(r"[0-9a-zA-Z]{32}", output)
+    # if not match:
+    #     raise Exception("Flag not found")
+    # flag = match.group(0)
+    # return flag
+
+
+def bandit28(password: str) -> str:
+    client = BanditClient(username="bandit28", password=password)
+    cmd = (
+        "cd $(mktemp -d) && "
+        "git clone ssh://bandit28-git@localhost:2220/home/bandit28-git/repo && "
+        "git --no-pager log && "
+        "cat /etc/bandit_pass/bandit28"
+    )
+    res = client.run(cmd)
+    print(res)
+    exit(0)
 
 
 # this is the order that the solvers will be called in, essentially piped together
@@ -372,4 +405,5 @@ def get_solvers() -> List[SolverType]:
         bandit25,
         bandit26,
         bandit27,
+        bandit28,
     ]
