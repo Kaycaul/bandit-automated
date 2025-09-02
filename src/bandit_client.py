@@ -60,7 +60,9 @@ class BanditClient:
 
     def run(self, cmd: str) -> str:
         _, stdout, stderr = self.__client.exec_command(cmd)
-        print(stderr.read().decode("utf-8"))
+        err = stderr.read().decode("utf-8")
+        if err:
+            print(err)
         return stdout.read().decode("utf-8")
 
     def download_file(self, remote_file: str, destination: str = ".") -> None:

@@ -325,40 +325,52 @@ def bandit26(key: str) -> str:
 
 
 def bandit27(password: str) -> str:
-    run_command("mkdir -p tmp", quiet=False)
-    run_command("chmod 777 tmp", quiet=False)
-    # fuck this insane bullshit
-    # run_command(
-    #     f"sshpass -p {password} "
-    #     "ssh -o StrictHostKeyChecking=no "
-    #     "git clone ssh://bandit27-git@bandit.labs.overthewire.org:2220/home/bandit27-git/repo "
-    #     "./tmp",
-    #     quiet=False,
-    # )
-    run_command_with_args(
-        [
-            "sshpass",
-            "-p",
-            password,
-            "ssh",
-            "-o",
-            "StrictHostKeyChecking=no",
-            "-o",
-            "UserKnownHostsFile=/dev/null",
-            "git clone"
-            "git",
-            "clone",
-            "ssh://bandit27-git@localhost:2220/home/bandit27-git/repo",
-            "./tmp",
-        ],
-        quiet=False,
+    client = BanditClient(username="bandit27", password=password)
+    tmp = client.run("mktemp -d").strip()
+
+    shell = client._get().invoke_shell()
+
+    cmd = (
+        f"git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo {tmp}"
     )
+    shell.send(f"{cmd}\n")
+    res = ""
+    while True:
+        if not shell.recv_ready():
+            time.sleep(0.05)
+            continue
+        res += shell.recv(1024).decode("utf-8")
+        if "(yes/no/[fingerprint])?" in res:
+            break
+
+    shell.send("yes\n")
+    res = ""
+    while True:
+        if not shell.recv_ready():
+            time.sleep(0.05)
+            continue
+        res += shell.recv(1024).decode("utf-8")
+        if "password:" in res:
+            break
+
+    shell.send(f"{password}\n")
+    res = ""
+    while True:
+        if not shell.recv_ready():
+            time.sleep(0.05)
+            continue
+        res += shell.recv(1024).decode("utf-8")
+        if ":~$" in res:
+            break
+
+    output = client.run(f"cat {tmp}/README")
+    match = re.search(r"[0-9a-zA-Z]{32}", output)
+    if not match:
+        raise Exception("Flag not found")
+    flag = match.group(0)
+    print(flag)
     exit(0)
-    # match = re.search(r"[0-9a-zA-Z]{32}", output)
-    # if not match:
-    #     raise Exception("Flag not found")
-    # flag = match.group(0)
-    # return flag
+    return flag
 
 
 def bandit28(password: str) -> str:

@@ -1,7 +1,7 @@
 FROM python:slim
 RUN apt-get -y update && \ 
     apt-get -y upgrade && \
-    apt-get -y install xxd bzip2 sshpass git
+    apt-get -y install xxd bzip2 sshpass
 
 WORKDIR /bandit
 RUN mkdir -p cache
