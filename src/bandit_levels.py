@@ -325,12 +325,10 @@ def bandit26(key: str) -> str:
 
 def bandit27(password: str) -> str:
     client = BanditClient(username="bandit27", password=password)
-
     repo = client.git_clone(
         repo_url="ssh://bandit27-git@localhost:2220/home/bandit27-git/repo",
         password=password,
     )
-
     output = client.run(f"cat {repo}/README")
     match = re.search(r"[0-9a-zA-Z]{32}", output)
     if not match:
@@ -340,15 +338,14 @@ def bandit27(password: str) -> str:
 
 def bandit28(password: str) -> str:
     client = BanditClient(username="bandit28", password=password)
-    cmd = (
-        "cd $(mktemp -d) && "
-        "git clone ssh://bandit28-git@localhost:2220/home/bandit28-git/repo && "
-        "git --no-pager log && "
-        "cat /etc/bandit_pass/bandit28"
+    repo = client.git_clone(
+        repo_url="ssh://bandit28-git@localhost:2220/home/bandit28-git/repo",
+        password=password,
     )
-    res = client.run(cmd)
-    print(res)
-    exit(0)
+    git = f"git --git-dir={repo}/.git --work-tree={repo}"
+    output = client.run(f"{git} reset --hard HEAD~1 && cat {repo}/README.md")
+    match = re.search(r"[0-9a-zA-Z]{32}", output)
+    return match.group(0)
 
 
 # this is the order that the solvers will be called in, essentially piped together
