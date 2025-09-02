@@ -10,7 +10,6 @@ from bandit_client import (
     BanditClient,
     run_remote_command,
     run_command,
-    run_command_with_args,
 )
 
 SolverType = Callable[[str], str]
@@ -326,51 +325,17 @@ def bandit26(key: str) -> str:
 
 def bandit27(password: str) -> str:
     client = BanditClient(username="bandit27", password=password)
-    tmp = client.run("mktemp -d").strip()
 
-    shell = client._get().invoke_shell()
-
-    cmd = (
-        f"git clone ssh://bandit27-git@localhost:2220/home/bandit27-git/repo {tmp}"
+    repo = client.git_clone(
+        repo_url="ssh://bandit27-git@localhost:2220/home/bandit27-git/repo",
+        password=password,
     )
-    shell.send(f"{cmd}\n")
-    res = ""
-    while True:
-        if not shell.recv_ready():
-            time.sleep(0.05)
-            continue
-        res += shell.recv(1024).decode("utf-8")
-        if "(yes/no/[fingerprint])?" in res:
-            break
 
-    shell.send("yes\n")
-    res = ""
-    while True:
-        if not shell.recv_ready():
-            time.sleep(0.05)
-            continue
-        res += shell.recv(1024).decode("utf-8")
-        if "password:" in res:
-            break
-
-    shell.send(f"{password}\n")
-    res = ""
-    while True:
-        if not shell.recv_ready():
-            time.sleep(0.05)
-            continue
-        res += shell.recv(1024).decode("utf-8")
-        if ":~$" in res:
-            break
-
-    output = client.run(f"cat {tmp}/README")
+    output = client.run(f"cat {repo}/README")
     match = re.search(r"[0-9a-zA-Z]{32}", output)
     if not match:
         raise Exception("Flag not found")
-    flag = match.group(0)
-    print(flag)
-    exit(0)
-    return flag
+    return match.group(0)
 
 
 def bandit28(password: str) -> str:

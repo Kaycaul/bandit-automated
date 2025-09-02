@@ -1,9 +1,11 @@
 import io
 import subprocess
+import time
 from typing import List
 import warnings
 from paramiko import (
     AuthenticationException,
+    Channel,
     SSHClient,
     AutoAddPolicy,
     SSHException,
@@ -14,6 +16,7 @@ from bandit_constants import BANDIT_HOST, BANDIT_PORT_SSH
 
 class BanditClient:
     __client: SSHClient
+    __shell: Channel = None  # not initialized until needed
 
     def __init__(
         self,
@@ -77,13 +80,59 @@ class BanditClient:
             )
         print(f"\n{remote_file} saved to {destination}")
 
-    def __del__(self):
-        self.__client.close()
+    # send individual keystrokes to a persistent shell
+    # expectation: wait for this string as a signal to return
+    # timeout: number of seconds to wait before raising
+    # returns: the output of the shell
+    def send_keystrokes(
+        self, keystrokes: str, expectation: str, timeout: int = 5
+    ) -> str:
+        time_waited = 0
+        shell = self.__get_shell()
+        shell.send(keystrokes)
+        res = ""
+        while True:
+            if not shell.recv_ready():
+                if time_waited > timeout:
+                    print(res)
+                    raise Exception(f"Timed out after {timeout} seconds")
+                time.sleep(0.05)
+                time_waited += 0.05
+                continue
+            res += shell.recv(1024).decode("utf-8")
+            if expectation in res:
+                return res
+
+    # clones a repo by sending keystrokes to ignore fingerprint and send password
+    def git_clone(self, repo_url: str, password: str) -> str:
+        tmp = self.run("mktemp -d").strip()
+        self.send_keystrokes(
+            f"git clone {repo_url} {tmp}\n",
+            expectation="(yes/no/[fingerprint])?",
+        )
+        self.send_keystrokes(
+            "yes\n",
+            expectation="password:",
+        )
+        self.send_keystrokes(
+            f"{password}\n",
+            expectation=":~$",
+        )
+        return tmp
 
     # big bad, but this might be needed sometimes
     # dont use this unless you really need to
     def _get(self) -> SSHClient:
         return self.__client
+
+    # initialize the shell on demand
+    def __get_shell(self) -> Channel:
+        if not self.__shell:
+            self.__shell = self.__client.invoke_shell()
+        return self.__shell
+
+    def __del__(self):
+        self.__client.close()
 
 
 def run_remote_command(
