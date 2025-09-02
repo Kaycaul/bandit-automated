@@ -52,9 +52,9 @@ class BanditClient:
                 break
             except AuthenticationException:
                 if password:
-                    print(f"Authentication failed using password: {password}")
+                    print(f"Authentication failed using password: \"{password}\"")
                 else:
-                    print(f"Authentication failed using key: {key}")
+                    print(f"Authentication failed using key: \"{key}\"")
                 raise
             except (ConnectionResetError, SSHException):
                 print("Connection reset, trying again...")

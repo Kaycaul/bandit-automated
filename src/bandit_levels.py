@@ -348,6 +348,30 @@ def bandit28(password: str) -> str:
     return match.group(0)
 
 
+def bandit29(password: str) -> str:
+    client = BanditClient(username="bandit29", password=password)
+    repo = client.git_clone(
+        repo_url="ssh://bandit29-git@localhost:2220/home/bandit29-git/repo",
+        password=password,
+    )
+    git = f"git --git-dir={repo}/.git --work-tree={repo}"
+    output = client.run(f"{git} checkout dev && cat {repo}/README.md")
+    match = re.search(r"[0-9a-zA-Z]{32}", output)
+    return match.group(0)
+
+
+def bandit30(password: str) -> str:
+    client = BanditClient(username="bandit30", password=password)
+    repo = client.git_clone(
+        repo_url="ssh://bandit30-git@localhost:2220/home/bandit30-git/repo",
+        password=password,
+    )
+    git = f"git --git-dir={repo}/.git --work-tree={repo}"
+    output = client.run(f"{git} show secret")
+    match = re.search(r"[0-9a-zA-Z]{32}", output)
+    return match.group(0)
+
+
 # this is the order that the solvers will be called in, essentially piped together
 def get_solvers() -> List[SolverType]:
     return [
@@ -380,4 +404,6 @@ def get_solvers() -> List[SolverType]:
         bandit26,
         bandit27,
         bandit28,
+        bandit29,
+        bandit30,
     ]
