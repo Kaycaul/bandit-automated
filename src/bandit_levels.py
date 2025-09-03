@@ -304,20 +304,22 @@ def bandit25(password: str) -> str:
 # this is the worst solution by far and a stupid gimmicky zelda puzzle
 def bandit26(key: str) -> str:
     client = BanditClient(username="bandit26", key=key)
-    shell = client._get().invoke_shell(height=6)  # force `more` to enter scrolling mode
-    shell.send("v")  # open vim from `more`
-    shell.send(":set shell=/bin/bash\n")  # reset the shell to something useful
-    shell.send(":term\n")  # open a terminal in vim
-    shell.send("./bandit27-do cat /etc/bandit_pass/bandit27\n")  # get the next password
-
-    # parse the output of those inputs
-    time.sleep(1)
-    result = ""
-    while shell.recv_ready():
-        result += shell.recv(1024).decode("utf-8")
+    client.init_shell(height=6)
+    client.send_keystrokes(
+        "v",
+        expectation="[readonly]"
+    )
+    client.send_keystrokes(
+        ":set shell=/bin/bash\n:term\n",
+        expectation=":~$"
+    )
+    output = client.send_keystrokes(
+        "./bandit27-do cat /etc/bandit_pass/bandit27\n",
+        expectation=":~$"
+    )
 
     # look for a flag in all this output mess
-    match = re.search(r"[0-9a-zA-Z]{32} ", result)
+    match = re.search(r"[0-9a-zA-Z]{32} ", output)
     if not match:
         raise Exception("Flag not found")
     return match.group(0).strip()

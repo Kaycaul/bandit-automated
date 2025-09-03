@@ -125,10 +125,13 @@ class BanditClient:
     def _get(self) -> SSHClient:
         return self.__client
 
+    def init_shell(self, height: int = 20) -> None:
+        self.__get_shell(height=height)
+
     # initialize the shell on demand
-    def __get_shell(self) -> Channel:
+    def __get_shell(self, height: int = 20) -> Channel:
         if not self.__shell:
-            self.__shell = self.__client.invoke_shell()
+            self.__shell = self.__client.invoke_shell(height=height)
         return self.__shell
 
     def __del__(self):
