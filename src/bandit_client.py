@@ -103,22 +103,25 @@ class BanditClient:
             if expectation in res:
                 return res
 
-    # clones a repo by sending keystrokes to ignore fingerprint and send password
     def git_clone(self, repo_url: str, password: str) -> str:
         tmp = self.run("mktemp -d").strip()
-        self.send_keystrokes(
-            f"git clone {repo_url} {tmp}\n",
+        self.run_with_git_auth(f"git clone {repo_url} {tmp}\n", password)
+        return tmp
+
+    def run_with_git_auth(self, cmd: str, password: str) -> str:
+        res = self.send_keystrokes(
+            f"{cmd}\n",
             expectation="(yes/no/[fingerprint])?",
         )
-        self.send_keystrokes(
+        res += self.send_keystrokes(
             "yes\n",
             expectation="password:",
         )
-        self.send_keystrokes(
+        res += self.send_keystrokes(
             f"{password}\n",
             expectation=":~$",
         )
-        return tmp
+        return res
 
     # big bad, but this might be needed sometimes
     # dont use this unless you really need to

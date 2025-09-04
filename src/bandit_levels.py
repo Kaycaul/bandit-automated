@@ -305,17 +305,10 @@ def bandit25(password: str) -> str:
 def bandit26(key: str) -> str:
     client = BanditClient(username="bandit26", key=key)
     client.init_shell(height=6)
-    client.send_keystrokes(
-        "v",
-        expectation="[readonly]"
-    )
-    client.send_keystrokes(
-        ":set shell=/bin/bash\n:term\n",
-        expectation=":~$"
-    )
+    client.send_keystrokes("v", expectation="[readonly]")
+    client.send_keystrokes(":set shell=/bin/bash\n:term\n", expectation=":~$")
     output = client.send_keystrokes(
-        "./bandit27-do cat /etc/bandit_pass/bandit27\n",
-        expectation=":~$"
+        "./bandit27-do cat /etc/bandit_pass/bandit27\n", expectation=":~$"
     )
 
     # look for a flag in all this output mess
@@ -388,15 +381,18 @@ def bandit31(password: str) -> str:
         password=password,
     )
     git = f"git --git-dir={repo}/.git --work-tree={repo}"
-    client.run(f"echo 'May I come in?' >> {repo}/key.txt")
-    client.run(f"rm {repo}/.gitignore")
-    client.run(f"{git} add .")
-    client.run(f"{git} commit -m 'commit'")
-    output = client.run(f"{git} push")
-    match = re.search(r"[0-9a-zA-Z]{32}", output)
-    print(match.group(0))
-    exit(0)
-    return match.group(0)
+    client.run(
+        f"echo 'May I come in?' >> {repo}/key.txt"
+        f"&& rm {repo}/.gitignore"
+        f"&& {git} add ."
+        f"&& {git} commit -m 'commit'"
+    )
+    output = client.run_with_git_auth(
+        cmd=f"{git} push",
+        password=password,
+    )
+    match = re.search(r"remote: ([0-9a-zA-Z]{32})", output)
+    return match.group(1)
 
 
 # this is the order that the solvers will be called in, essentially piped together
