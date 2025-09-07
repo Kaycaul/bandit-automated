@@ -3,7 +3,6 @@
 import re
 import os
 import shutil
-import time
 from typing import Callable, List
 
 from bandit_client import (
