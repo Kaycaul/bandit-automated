@@ -394,6 +394,24 @@ def bandit31(password: str) -> str:
     return match.group(1)
 
 
+def bandit32(password: str) -> str:
+    client = BanditClient(username="bandit32", password=password)
+    output = client.send_keystrokes(
+        "$0\ncat /etc/bandit_pass/bandit33\n",
+        expectation="$",
+    )
+    return re.search(r"\$ ([0-9a-zA-Z]{32})", output).group(1)
+
+
+# bandit 33 is not implemented at the time of writing
+# this just returns the congratulation message
+def bandit33(password: str) -> str:
+    client = BanditClient(username="bandit33", password=password)
+    res = "/home/bandit33/README.txt says:\n"
+    res += client.run("cat ~/README.txt").strip()
+    return res
+
+
 # this is the order that the solvers will be called in, essentially piped together
 def get_solvers() -> List[SolverType]:
     return [
@@ -429,4 +447,6 @@ def get_solvers() -> List[SolverType]:
         bandit29,
         bandit30,
         bandit31,
+        bandit32,
+        bandit33,
     ]
